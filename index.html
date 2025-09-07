@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Time Travel Image Evolution</title>
+    <link rel="stylesheet" href="index.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.sh/@google/genai@^0.12.0"
+        }
+      }
+    </script>
+    <script type="module" src="index.tsx"></script>
+  </head>
+  <body>
+    <main id="app-container" class="app-container">
+      <!-- ===== INPUT VIEW ===== -->
+      <div id="input-view">
+        <header class="app-header">
+          <h1>Time Travel Image Evolution</h1>
+          <p>Visualize any location's journey through time, from 1800 to 2100.</p>
+        </header>
+        <form id="prompt-form" class="prompt-form">
+          <div class="input-group">
+            <label for="prompt-input">Location or Scene</label>
+            <input
+              type="text"
+              id="prompt-input"
+              placeholder="e.g., Times Square, NYC"
+              aria-label="Enter your location prompt"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <label for="image-upload">Optional: Start with a reference image</label>
+            <div class="file-upload-wrapper">
+               <input type="file" id="image-upload" accept="image/*" />
+               <label for="image-upload" class="file-upload-label" role="button" aria-label="Upload an image">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                  </svg>
+                  <span>Click to upload</span>
+               </label>
+               <div id="image-preview-container" class="image-preview-container" aria-live="polite"></div>
+            </div>
+          </div>
+          <button type="submit" id="submit-button" class="submit-button">
+            Generate Timeline
+          </button>
+        </form>
+      </div>
+
+      <!-- ===== LOADING OVERLAY ===== -->
+      <div id="loading-overlay" class="loading-overlay" role="status" aria-hidden="true">
+        <div class="loading-content">
+          <h2 id="loading-decade">Starting Time Engine...</h2>
+          <div class="progress-bar">
+            <div id="progress-bar-inner" class="progress-bar-inner"></div>
+          </div>
+          <p id="loading-message">Initializing time circuits...</p>
+        </div>
+      </div>
+
+      <!-- ===== RESULTS VIEW ===== -->
+      <div id="results-view" class="results-view" aria-hidden="true">
+         <header class="results-header">
+            <h2 id="timeline-title">Timeline</h2>
+            <button id="reset-button" class="reset-button">Generate New Timeline</button>
+         </header>
+         <div id="timeline-container" class="timeline-container">
+            <div id="timeline" class="timeline">
+              <!-- Generated images will be injected here -->
+            </div>
+         </div>
+      </div>
+    </main>
+  </body>
+</html>
