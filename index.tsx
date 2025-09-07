@@ -21,13 +21,25 @@ const timelineTitle = document.getElementById('timeline-title') as HTMLHeadingEl
 // Loading Overlay Elements
 const loadingOverlay = document.getElementById('loading-overlay') as HTMLDivElement;
 const loadingDecade = document.getElementById('loading-decade') as HTMLHeadingElement;
+const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
 const progressBarInner = document.getElementById('progress-bar-inner') as HTMLDivElement;
 const loadingMessage = document.getElementById('loading-message') as HTMLParagraphElement;
+
+// Video Elements
+const videoPromptContainer = document.getElementById('video-prompt-container') as HTMLDivElement;
+const generateVideoButton = document.getElementById('generate-video-button') as HTMLButtonElement;
+const declineVideoButton = document.getElementById('decline-video-button') as HTMLButtonElement;
+const videoModal = document.getElementById('video-modal') as HTMLDivElement;
+const videoPlayer = document.getElementById('video-player') as HTMLVideoElement;
+const closeVideoButton = document.getElementById('close-video-button') as HTMLButtonElement;
+
 
 // --- State ---
 let ai: GoogleGenAI;
 let userImage: Part | null = null;
 const DECADES_TO_GENERATE = Array.from({ length: (2100 - 1800) / 10 + 1 }, (_, i) => 1800 + i * 10);
+let generatedImages: { url: string; bytes: string; }[] = [];
+let currentPrompt: string = '';
 
 // --- Initialization ---
 try {
@@ -78,6 +90,13 @@ resetButton.addEventListener('click', () => {
   imageUpload.value = '';
   imagePreviewContainer.innerHTML = '';
   userImage = null;
+  generatedImages = [];
+  currentPrompt = '';
+  videoPlayer.src = '';
+  
+  // Hide optional UI
+  videoPromptContainer.setAttribute('aria-hidden', 'true');
+  videoModal.setAttribute('aria-hidden', 'true');
 
   // Switch views
   resultsView.setAttribute('aria-hidden', 'true');
@@ -85,9 +104,21 @@ resetButton.addEventListener('click', () => {
   appContainer.classList.remove('show-results');
 });
 
+generateVideoButton.addEventListener('click', () => generateVideo());
+declineVideoButton.addEventListener('click', () => videoPromptContainer.setAttribute('aria-hidden', 'true'));
+closeVideoButton.addEventListener('click', () => {
+    videoModal.setAttribute('aria-hidden', 'true');
+    videoPlayer.pause();
+    videoPlayer.src = '';
+});
+
 // --- Core Logic ---
 async function generateTimeline(prompt: string) {
   setLoading(true, 0, 'Warming up the time machine...');
+  timeline.innerHTML = '';
+  generatedImages = [];
+  currentPrompt = prompt;
+  videoPromptContainer.setAttribute('aria-hidden', 'true');
   timelineTitle.textContent = `Timeline: "${prompt}"`;
 
   let lastGeneratedImage: Part | null = null;
@@ -133,12 +164,16 @@ async function generateTimeline(prompt: string) {
       if (!newImageBytes) throw new Error(`Image generation failed for ${decade}s.`);
       
       const imageUrl = `data:image/jpeg;base64,${newImageBytes}`;
+      generatedImages.push({ url: imageUrl, bytes: newImageBytes });
       displayTimelineImage(imageUrl, `${decade}s`);
 
       lastGeneratedImage = {
         inlineData: { mimeType: 'image/jpeg', data: newImageBytes },
       };
     }
+
+    videoPromptContainer.setAttribute('aria-hidden', 'false');
+
   } catch (error) {
     console.error(error);
     showError('A time travel anomaly occurred! Could not complete the timeline.');
@@ -147,13 +182,86 @@ async function generateTimeline(prompt: string) {
   }
 }
 
+async function generateVideo() {
+    if (generatedImages.length === 0 || !currentPrompt) {
+        showError("Cannot generate video without a timeline.");
+        return;
+    }
+
+    videoPromptContainer.setAttribute('aria-hidden', 'true');
+    setLoading(true, 0, 'Contacting the VEO time engine...', true);
+
+    const videoLoadingMessages = [
+        "Gathering temporal energy...",
+        "Rendering keyframes from across the centuries...",
+        "Stitching the timeline into a moving picture...",
+        "Finalizing the cinematic time-lapse...",
+        "Polishing the final reel..."
+    ];
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+        loadingMessage.textContent = videoLoadingMessages[messageIndex % videoLoadingMessages.length];
+        messageIndex++;
+    }, 5000);
+
+    try {
+        const firstImage = generatedImages[0];
+
+        let operation = await ai.models.generateVideos({
+            model: 'veo-2.0-generate-001',
+            prompt: `Create a short, animated time-lapse video showing the evolution of this scene from the 1800s to 2100. Subject: ${currentPrompt}`,
+            image: {
+              imageBytes: firstImage.bytes,
+              mimeType: 'image/jpeg',
+            },
+            config: {
+              numberOfVideos: 1
+            }
+        });
+
+        loadingDecade.textContent = 'Generating Video...';
+
+        while (!operation.done) {
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            operation = await ai.operations.getVideosOperation({ operation: operation });
+        }
+
+        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        if (!downloadLink) throw new Error("Video generation succeeded but no download link was found.");
+
+        loadingMessage.textContent = "Downloading the final video...";
+        const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+        if (!response.ok) throw new Error(`Failed to download video: ${response.statusText}`);
+
+        const videoBlob = await response.blob();
+        const videoUrl = URL.createObjectURL(videoBlob);
+        
+        videoPlayer.src = videoUrl;
+        videoModal.setAttribute('aria-hidden', 'false');
+
+    } catch(error) {
+        console.error("Video generation failed:", error);
+        showError("Failed to generate the video. Please try again.");
+    } finally {
+        clearInterval(messageInterval);
+        setLoading(false);
+    }
+}
+
 // --- UI Functions ---
-function setLoading(isLoading: boolean, progress: number = 0, message: string = '') {
+function setLoading(isLoading: boolean, progress: number = 0, message: string = '', indeterminate: boolean = false) {
   if (isLoading) {
     loadingOverlay.setAttribute('aria-hidden', 'false');
-    progressBarInner.style.width = `${progress * 100}%`;
-    const decade = DECADES_TO_GENERATE[Math.floor(progress * (DECADES_TO_GENERATE.length-1))];
-    loadingDecade.textContent = decade ? `Generating: ${decade}s...` : 'Starting Time Engine...';
+    progressBar.classList.toggle('indeterminate', indeterminate);
+    progressBarInner.style.width = indeterminate ? '100%' : `${progress * 100}%`;
+    
+    if (!indeterminate) {
+        const decade = DECADES_TO_GENERATE[Math.floor(progress * (DECADES_TO_GENERATE.length-1))];
+        loadingDecade.textContent = decade ? `Generating: ${decade}s...` : 'Starting Time Engine...';
+    } else {
+        loadingDecade.textContent = 'Preparing Video...';
+    }
+    
     loadingMessage.textContent = message;
     
     // Switch to results view as soon as loading starts
@@ -164,6 +272,7 @@ function setLoading(isLoading: boolean, progress: number = 0, message: string = 
     }
   } else {
     loadingOverlay.setAttribute('aria-hidden', 'true');
+    progressBar.classList.remove('indeterminate');
   }
 }
 

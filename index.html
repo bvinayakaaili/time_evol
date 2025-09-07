@@ -57,7 +57,7 @@
       <div id="loading-overlay" class="loading-overlay" role="status" aria-hidden="true">
         <div class="loading-content">
           <h2 id="loading-decade">Starting Time Engine...</h2>
-          <div class="progress-bar">
+          <div id="progress-bar" class="progress-bar">
             <div id="progress-bar-inner" class="progress-bar-inner"></div>
           </div>
           <p id="loading-message">Initializing time circuits...</p>
@@ -75,7 +75,22 @@
               <!-- Generated images will be injected here -->
             </div>
          </div>
+         <div id="video-prompt-container" class="video-prompt-container" aria-hidden="true">
+            <p>Timeline complete! Generate a video of this evolution?</p>
+            <div>
+                <button id="generate-video-button" class="video-button">Create Video</button>
+                <button id="decline-video-button" class="video-button secondary">No, Thanks</button>
+            </div>
+        </div>
       </div>
+
+      <!-- ===== VIDEO MODAL ===== -->
+      <div id="video-modal" class="video-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="video-modal-content">
+            <button id="close-video-button" class="close-button" aria-label="Close video player">&times;</button>
+            <video id="video-player" controls autoplay loop playsinline></video>
+        </div>
+    </div>
     </main>
   </body>
 </html>

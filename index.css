@@ -250,6 +250,18 @@ body {
   border-radius: 4px;
   transition: width 0.5s ease-out;
 }
+
+.progress-bar.indeterminate .progress-bar-inner {
+  width: 100%;
+  background-size: 200% 100%;
+  animation: indeterminate-progress 2s infinite linear;
+}
+
+@keyframes indeterminate-progress {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
 #loading-message {
   color: var(--on-surface-color);
 }
@@ -337,6 +349,97 @@ body {
 }
 .timeline::-webkit-scrollbar-thumb:hover {
   background-color: #555;
+}
+
+/* Video Prompt */
+.video-prompt-container {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid var(--border-color);
+    background-color: rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    transition: opacity 0.3s ease;
+}
+.video-prompt-container[aria-hidden="true"] {
+    display: none;
+}
+.video-prompt-container p {
+    font-weight: 500;
+}
+.video-prompt-container > div {
+    display: flex;
+    gap: 1rem;
+}
+.video-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+#generate-video-button {
+    color: var(--on-primary-color);
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+}
+#generate-video-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 170, 255, 0.3);
+}
+.video-button.secondary {
+    background-color: #3e3e3e;
+    color: var(--on-surface-color);
+}
+.video-button.secondary:hover {
+    background-color: #555;
+}
+
+
+/* Video Modal */
+.video-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(16, 16, 21, 0.9);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.video-modal[aria-hidden="false"] {
+    opacity: 1;
+    pointer-events: auto;
+}
+.video-modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 90vh;
+}
+#video-player {
+    width: 100%;
+    max-height: 90vh;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+.close-button {
+    position: absolute;
+    top: -40px;
+    right: -10px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 32px;
+    line-height: 1;
 }
 
 .error-message {
